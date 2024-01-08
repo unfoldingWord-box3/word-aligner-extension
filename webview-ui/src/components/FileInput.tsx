@@ -2,7 +2,26 @@ import React, { useRef } from 'react';
 
 console.log("FileInput")
 
-function FileInput() {
+export type LoadedFileType = {
+  fileUrl: string,
+  fileData: string | undefined,
+};
+
+export interface OnFileLoadType {
+  (data: LoadedFileType): void;
+}
+
+export type AppParams = {
+  onFileLoad: OnFileLoadType,
+  open: boolean,
+  title: string,
+};
+
+export const FileInput: React.FC<AppParams> = ({
+  onFileLoad,
+  open,
+  title
+}) => {
   const inputFile = useRef(null);
 
   const onButtonClick = () => {
@@ -19,7 +38,12 @@ function FileInput() {
 
     reader.onloadend = () => {
       // The file's text will be printed here
-      console.log("FileInput - loaded file", reader.result);
+      const fileData = reader?.result?.toString()
+      console.log("FileInput - loaded file", fileData?.substring(0, 100));
+      onFileLoad?.({
+        fileUrl: file?.path,
+        fileData: fileData,
+      })
     };
 
     console.log("FileInput - selected file", file);
@@ -27,10 +51,13 @@ function FileInput() {
   };
 
   return (
-    <div>
-      <input type='file' id='file' ref={inputFile} style={{ display: 'none' }} onChange={handleFileUpload} />
-      <button onClick={onButtonClick}>Open file upload window</button>
-    </div>
+    open ?
+      <div style={{"padding": "10px"}}>
+        <input type='file' id='file' ref={inputFile} style={{ display: 'none' }} onChange={handleFileUpload} />
+        <button onClick={onButtonClick}>{title}</button>
+      </div>
+    :
+      <></>
   );
 }
 

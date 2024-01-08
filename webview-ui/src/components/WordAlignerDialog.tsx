@@ -99,7 +99,6 @@ export function WordAlignerDialog() {
             resetAlignments={onReset}
           />
       </div>
-      <FileInput />
     </>
   );
 };
