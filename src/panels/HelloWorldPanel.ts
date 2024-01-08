@@ -51,9 +51,9 @@ export class HelloWorldPanel {
       // If a webview panel does not already exist create and show a new one
       const panel = window.createWebviewPanel(
         // Panel view type
-        "showHelloWorld",
+        "showWordAligner",
         // Panel title
-        "Hello World",
+        "Word Aligner Demo",
         // The editor column the panel should be displayed in
         ViewColumn.One,
         // Extra panel configurations
@@ -115,7 +115,7 @@ export class HelloWorldPanel {
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
           <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
-          <title>Hello World</title>
+          <title>Word Aligner Demo</title>
         </head>
         <body>
           <div id="root"></div>

@@ -1,7 +1,7 @@
 {
-  "name": "hello-world-react-vite",
-  "displayName": "hello-world-react-vite",
-  "description": "A hello world sample extension to demonstrate using React + Vite with the Webview UI Toolkit for VS Code.",
+  "name": "word-aligner-react-vite",
+  "displayName": "word-aligner-react-vite",
+  "description": "A Word Aligner Demo extension for VS Code.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.75.0"
@@ -10,8 +10,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "hello-world.showHelloWorld",
-        "title": "Hello World (React + Vite): Show"
+        "command": "word-aligner.showWordAligner",
+        "title": "Word Aligner Demo: Show"
       }
     ]
   },
