@@ -1,68 +1,99 @@
 import React, { useEffect, useState } from 'react';
 // @ts-ignore
-import { AlignmentHelpers, UsfmFileConversionHelpers, WordAligner } from 'word-aligner-rcl';
-import {NT_ORIG_LANG} from '../common/constants';
+import { AlignmentHelpers, UsfmFileConversionHelpers, usfmHelpers, WordAligner } from "word-aligner-rcl";
+import { NT_ORIG_LANG, OT_ORIG_LANG } from "../common/constants";
 
-// import * as alignedVerseJson from '../__tests__/fixtures/alignments/en_ult_tit_1_1.json';
-import * as alignedVerseJson from '../../__tests__/fixtures/alignments/en_ult_tit_1_1_partial.json';
-import * as originalVerseJson from '../../__tests__/fixtures/alignments/grk_tit_1_1.json';
 import * as LexiconData_ from "../../__tests__/fixtures/lexicon/lexicons.json";
+import { isNT } from "../common/BooksOfTheBible";
 const LexiconData: Record<string, Record<string, Record<string,string>>> = LexiconData_
 
 console.log("WordAlignerDialog")
-
 
 const translate = (key: string) => {
   console.log(`translate(${key})`)
 };
 
-const targetVerseUSFM = alignedVerseJson.usfm;
-const sourceVerseUSFM = originalVerseJson.usfm;
+const targetWords_: object[] = [], verseAlignments_: object[] = []
 
-const {targetWords: targetWords_, verseAlignments: verseAlignments_} = AlignmentHelpers.parseUsfmToWordAlignerData(targetVerseUSFM, sourceVerseUSFM);
+export interface ScriptureReferenceType {
+  bookId: string|null;
+  chapter: number|string;
+  verse: number|string;
+}
 
-const alignmentComplete = AlignmentHelpers.areAlgnmentsComplete(targetWords_, verseAlignments_);
-console.log(`Alignments are ${alignmentComplete ? 'COMPLETE!' : 'incomplete'}`);
+export type alignmentFinishedType = {
+  targetVerseObj?: Object,
+  alignmentChanged: boolean,
+};
+
+export interface OnAlignmentFinishedType {
+  (data: alignmentFinishedType): void;
+}
 
 export type WordAlignerParams = {
-  targetVerseObj: Object,
-  originalVerseObj: Object,
+  onAlignmentFinished: OnAlignmentFinishedType,
+  originalVerseObj: Object|null,
+  reference: ScriptureReferenceType,
+  targetVerseObj: Object|null,
 };
 
 export function WordAlignerDialog(params: WordAlignerParams) {
   const {
-    targetVerseObj,
+    onAlignmentFinished,
     originalVerseObj,
+    reference,
+    targetVerseObj,
   } = params
-  const [state, setState] = useState({targetWords: targetWords_, verseAlignments: verseAlignments_});
-  const {targetWords, verseAlignments} = state;
-
+  const [state, setState_] = useState({
+    targetWords: targetWords_,
+    verseAlignments: verseAlignments_,
+    alignmentChanged: false,
+    updatedTargetWords: null,
+    updatedVerseAlignments: null,
+  });
+  const {
+    targetWords,
+    verseAlignments,
+    alignmentChanged,
+    updatedTargetWords,
+    updatedVerseAlignments,
+  } = state;
+  
   const targetLanguageFont = '';
-  const sourceLanguage = NT_ORIG_LANG;
+  const sourceLanguage = isNT(reference?.bookId) ? NT_ORIG_LANG : OT_ORIG_LANG
   const lexicons = {};
   const contextId = {
-    "reference": {
-      "bookId": "tit",
-      "chapter": 1,
-      "verse": 1
-    },
-    "tool": "wordAlignment",
-    "groupId": "chapter_1"
+    reference,
+    tool: "wordAlignment",
+    groupId: "chapter_1"
   };
+
+  function setState(newState: object) {
+    setState_(prevState => ({ ...prevState, ...newState }))
+  }
+  
+  function initializeALignmentData() {
+    const targetVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(targetVerseObj);
+    const originalVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(originalVerseObj);
+    const {
+      targetWords: targetWords_,
+      verseAlignments: verseAlignments_,
+    } = AlignmentHelpers.parseUsfmToWordAlignerData(targetVerseUsfm, originalVerseUsfm);
+    setState({
+      targetWords: targetWords_,
+      verseAlignments: verseAlignments_,
+      alignmentChanged: false,
+      updatedTargetWords: null,
+      updatedVersAlignments: null,
+    });
+  }
 
   useEffect(() => {
     if (targetVerseObj && originalVerseObj) { // initialize aligner data from current verseObjects
-      const targetVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(targetVerseObj)
-      const originalVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(originalVerseObj)
-      const {targetWords: targetWords_, verseAlignments: verseAlignments_} = AlignmentHelpers.parseUsfmToWordAlignerData(targetVerseUsfm, originalVerseUsfm);
-      setState({targetWords: targetWords_, verseAlignments: verseAlignments_})
+      initializeALignmentData();
     }
   }, [ targetVerseObj, originalVerseObj ])
   
-  const showPopover = (PopoverTitle:any, wordDetails:any, positionCoord:any, rawData:any) => {
-    console.log(`showPopover()`, rawData)
-    window.prompt(`User clicked on ${JSON.stringify(rawData.token)}`)
-  };
   const loadLexiconEntry = (key:string) => {
     console.log(`loadLexiconEntry(${key})`)
   };
@@ -75,32 +106,55 @@ export function WordAlignerDialog(params: WordAlignerParams) {
   function onChange(results:any) {
     console.log(`WordAligner() - alignment changed, results`, results);// merge alignments into target verse and convert to USFM
     const {targetWords, verseAlignments} = results;
-    const verseUsfm = AlignmentHelpers.addAlignmentsToVerseUSFM(targetWords, verseAlignments, targetVerseUSFM);
+    const targetVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(targetVerseObj);
+    const verseUsfm = AlignmentHelpers.addAlignmentsToVerseUSFM(targetWords, verseAlignments, targetVerseUsfm);
     console.log(verseUsfm);
     const alignmentComplete = AlignmentHelpers.areAlgnmentsComplete(targetWords, verseAlignments);
+    setState({
+      alignmentChanged: true,
+      updatedTargetWords: targetWords,
+      updatedVerseAlignments: verseAlignments,
+    })
     console.log(`Alignments are ${alignmentComplete ? 'COMPLETE!' : 'incomplete'}`);
   }
 
   function onReset() {
     console.log("WordAligner() - reset Alignments")
-    const alignmentData = AlignmentHelpers.resetAlignments(verseAlignments, targetWords)
+    const alignmentData_ = AlignmentHelpers.resetAlignments(verseAlignments, targetWords)
     setState({
-      verseAlignments: alignmentData.verseAlignments,
-      targetWords: alignmentData.targetWords,
+      alignmentChanged: true,
+      targetWords: alignmentData_.targetWords,
+      verseAlignments: alignmentData_.verseAlignments,
     })
+  }
+
+  function onCancel() {
+    console.log("WordAligner() - cancel Alignments")
+    initializeALignmentData()
+    onAlignmentFinished?.({ alignmentChanged: false })
+  }
+
+  function onFinish() {
+    console.log("WordAligner() - finish Alignments")
+    const newState = {
+      alignmentChanged,
+
+    };
+    
+    if (alignmentChanged) {
+      const targetVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(targetVerseObj);
+      const verseUsfm = AlignmentHelpers.addAlignmentsToVerseUSFM(updatedTargetWords, updatedVerseAlignments, targetVerseUsfm)
+      const _targetVerseObj = usfmHelpers.usfmVerseToJson(verseUsfm)
+      // @ts-ignore
+      newState['targetVerseObj'] = _targetVerseObj
+    }
+    onAlignmentFinished?.(newState)
+    setState(newState)
   }
 
   return (
      <>
-      <div>
-        <button
-          style={{margin: '10px'}}
-          onClick={onReset}
-        >
-          {"Reset Alignments"}
-        </button>
-      </div>
-      <div style={{height: '650px', width: '800px'}}>
+      <div style={{height: '650px', width: '800px', paddingBottom: '60px'}}>
           <WordAligner
             styles={{ maxHeight: '450px', overflowY: 'auto' }}
             verseAlignments={verseAlignments}
@@ -109,13 +163,24 @@ export function WordAlignerDialog(params: WordAlignerParams) {
             contextId={contextId}
             targetLanguageFont={targetLanguageFont}
             sourceLanguage={sourceLanguage}
-            showPopover={showPopover}
+            showPopover={() => { }}
             lexicons={lexicons}
             loadLexiconEntry={loadLexiconEntry}
             onChange={onChange}
             getLexiconData={getLexiconData_}
             resetAlignments={onReset}
           />
+      </div>
+      <div>
+         <button style={{ margin: '10px 50px' }} onClick={onCancel}>
+           Cancel Alignments
+         </button>
+         <button style={{ margin: '10px 50px' }} onClick={onReset}>
+           Reset Alignments
+         </button>
+         <button style={{ margin: '10px 50px' }} onClick={onFinish}>
+           Alignments Done
+         </button>
       </div>
     </>
   );
