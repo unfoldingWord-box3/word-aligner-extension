@@ -1,8 +1,7 @@
-import React, {useState} from 'react';
+import React, { useEffect, useState } from 'react';
 // @ts-ignore
-import { AlignmentHelpers, WordAligner } from 'word-aligner-rcl';
+import { AlignmentHelpers, UsfmFileConversionHelpers, WordAligner } from 'word-aligner-rcl';
 import {NT_ORIG_LANG} from '../common/constants';
-import FileInput from "./FileInput"
 
 // import * as alignedVerseJson from '../__tests__/fixtures/alignments/en_ult_tit_1_1.json';
 import * as alignedVerseJson from '../../__tests__/fixtures/alignments/en_ult_tit_1_1_partial.json';
@@ -25,7 +24,16 @@ const {targetWords: targetWords_, verseAlignments: verseAlignments_} = Alignment
 const alignmentComplete = AlignmentHelpers.areAlgnmentsComplete(targetWords_, verseAlignments_);
 console.log(`Alignments are ${alignmentComplete ? 'COMPLETE!' : 'incomplete'}`);
 
-export function WordAlignerDialog() {
+export type WordAlignerParams = {
+  targetVerseObj: Object,
+  originalVerseObj: Object,
+};
+
+export function WordAlignerDialog(params: WordAlignerParams) {
+  const {
+    targetVerseObj,
+    originalVerseObj,
+  } = params
   const [state, setState] = useState({targetWords: targetWords_, verseAlignments: verseAlignments_});
   const {targetWords, verseAlignments} = state;
 
@@ -41,6 +49,16 @@ export function WordAlignerDialog() {
     "tool": "wordAlignment",
     "groupId": "chapter_1"
   };
+
+  useEffect(() => {
+    if (targetVerseObj && originalVerseObj) { // initialize aligner data from current verseObjects
+      const targetVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(targetVerseObj)
+      const originalVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(originalVerseObj)
+      const {targetWords: targetWords_, verseAlignments: verseAlignments_} = AlignmentHelpers.parseUsfmToWordAlignerData(targetVerseUsfm, originalVerseUsfm);
+      setState({targetWords: targetWords_, verseAlignments: verseAlignments_})
+    }
+  }, [ targetVerseObj, originalVerseObj ])
+  
   const showPopover = (PopoverTitle:any, wordDetails:any, positionCoord:any, rawData:any) => {
     console.log(`showPopover()`, rawData)
     window.prompt(`User clicked on ${JSON.stringify(rawData.token)}`)
@@ -101,6 +119,6 @@ export function WordAlignerDialog() {
       </div>
     </>
   );
-};
+}
 
 export default WordAlignerDialog;
