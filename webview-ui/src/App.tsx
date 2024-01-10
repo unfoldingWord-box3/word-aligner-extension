@@ -20,6 +20,7 @@ import {
   WordAlignerDialog,
 } from "./components/WordAlignerDialog";
 import { FileInput, LoadedFileType } from "./components/FileInput";
+import { sortReferences } from "./utilities/bibleUtils";
 
 console.log("starting app")
 
@@ -98,7 +99,7 @@ function App() {
       if (bookId === _bookId) {
         setOrginalBookObj(bookObjects)
         const chapters = bookObjects?.chapters
-        const _chapterList = Object.keys(chapters)
+        const _chapterList = sortReferences(Object.keys(chapters))
         setChapterList(_chapterList)
         const _chapter = '1';
         setChapter(_chapter)
@@ -113,7 +114,7 @@ function App() {
     // @ts-ignore
     const chapters = originalBookObj?.chapters || {};
     const verses = chapters[chapter];
-    const _verseList = verses && Object.keys(verses) || [];
+    const _verseList = verses && sortReferences(Object.keys(verses)) || [];
     setVerseList(_verseList);
     setVerse("1");
   }
@@ -183,6 +184,7 @@ function App() {
         <label htmlFor="chapter-dropdown">Chapter</label>
         <VSCodeDropdown
           id="chapter-dropdown"
+          value={chapter}
           disabled={showAligner}
           onChange={e => setChapter(getInputValue(e))}
         >
@@ -192,6 +194,7 @@ function App() {
         <label htmlFor="verse-dropdown">Verse</label>
         <VSCodeDropdown
           id="verse-dropdown"
+          value={verse}
           disabled={showAligner}
           onChange={e => setVerse(getInputValue(e))}
         >
