@@ -1,4 +1,10 @@
 import React, { useRef } from 'react';
+// @ts-ignore
+import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
+
+// @ts-ignore
+/// unfortunately, this doesn't work in the webview, fs is undefined
+// import * as fs from 'node:fs';
 
 console.log("FileInput")
 
@@ -11,13 +17,13 @@ export interface OnFileLoadType {
   (data: LoadedFileType): void;
 }
 
-export type AppParams = {
+export type FileInputParams = {
   onFileLoad: OnFileLoadType,
   open: boolean,
   title: string,
 };
 
-export const FileInput: React.FC<AppParams> = ({
+export const FileInput: React.FC<FileInputParams> = ({
   onFileLoad,
   open,
   title
@@ -44,6 +50,9 @@ export const FileInput: React.FC<AppParams> = ({
         fileUrl: file?.path,
         fileData: fileData,
       })
+      // console.log(`fs`, fs)
+      // const exists = fs.existsSync(file?.path)
+      // console.log(`verified file: ${exists}`)
     };
 
     console.log("FileInput - selected file", file);
@@ -54,7 +63,7 @@ export const FileInput: React.FC<AppParams> = ({
     open ?
       <div style={{"padding": "10px"}}>
         <input type='file' id='file' ref={inputFile} style={{ display: 'none' }} onChange={handleFileUpload} />
-        <button onClick={onButtonClick}>{title}</button>
+        <VSCodeButton onClick={onButtonClick}>{title}</VSCodeButton>
       </div>
     :
       <></>

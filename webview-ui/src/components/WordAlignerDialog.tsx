@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 // @ts-ignore
 import { AlignmentHelpers, UsfmFileConversionHelpers, usfmHelpers, WordAligner } from "word-aligner-rcl";
 import { NT_ORIG_LANG, OT_ORIG_LANG } from "../common/constants";
+// @ts-ignore
+import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 
 import * as LexiconData_ from "../../__tests__/fixtures/lexicon/lexicons.json";
 import { isNT } from "../common/BooksOfTheBible";
@@ -172,15 +174,15 @@ export function WordAlignerDialog(params: WordAlignerParams) {
           />
       </div>
       <div>
-         <button style={{ margin: '10px 50px' }} onClick={onCancel}>
+         <VSCodeButton style={{ margin: '10px 50px' }} onClick={onCancel}>
            Cancel Alignments
-         </button>
-         <button style={{ margin: '10px 50px' }} onClick={onReset}>
+         </VSCodeButton>
+         <VSCodeButton style={{ margin: '10px 50px' }} onClick={onReset}>
            Reset Alignments
-         </button>
-         <button style={{ margin: '10px 50px' }} onClick={onFinish}>
+         </VSCodeButton>
+         <VSCodeButton style={{ margin: '10px 50px' }} onClick={onFinish}>
            Alignments Done
-         </button>
+         </VSCodeButton>
       </div>
     </>
   );

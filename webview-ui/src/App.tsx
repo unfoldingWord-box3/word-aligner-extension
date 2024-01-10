@@ -21,6 +21,7 @@ import {
 } from "./components/WordAlignerDialog";
 import { FileInput, LoadedFileType } from "./components/FileInput";
 import { sortReferences } from "./utilities/bibleUtils";
+import FileSaveButton from "./components/FileSaveButton";
 
 console.log("starting app")
 
@@ -41,6 +42,7 @@ function getBookId(bookObjects: Object):string|null {
 
 function App() {
   const [targetBookObj, setTargetBookObj] = useState<object|null>(null);
+  const [targetBookPath, setTargetBookPath] = useState<string|null>(null);
   const [originalBookObj, setOrginalBookObj] = useState<object|null>(null);
   const [bookId, setBookId] = useState<string>('');
   const [chapter, setChapter] = useState<string>('1');
@@ -50,6 +52,7 @@ function App() {
   const [targetVerseObj, setTargetVerseObj] = useState<object|null>(null);
   const [originalVerseObj, setOriginalVerseObj] = useState<object|null>(null);
   const [showAligner, setShowAligner] = useState<boolean>(false);
+  const [fileModified, setFileModified] = useState<boolean>(false);
   const reference = { bookId, chapter, verse }
   
   function handleHowdyClick() {
@@ -73,6 +76,7 @@ function App() {
       _targetBookObj.chapters[chapter] = newVerses;
       setTargetBookObj(_targetBookObj) // save revised
       updateVerseObjects(_targetBookObj); // update for current verse
+      setFileModified(true)
     }
   }
 
@@ -86,6 +90,8 @@ function App() {
       if (bookId !== _bookId) {
         setBookId(_bookId || '')
         setOrginalBookObj(null) // clear original book since book has changed
+        setTargetBookPath(data?.fileUrl)
+        setFileModified(false)
       }
     }
   }
@@ -152,9 +158,9 @@ function App() {
 
   function showAlignmentPrompt() {
     if (haveBooksLoaded) {
-      return <button style={{ margin: "10px 50px" }} onClick={() => showSelectedVerse()}>
+      return <VSCodeButton style={{ margin: "10px 50px" }} onClick={() => showSelectedVerse()}>
         Align Verse
-      </button>;
+      </VSCodeButton>;
     }
     
     let prompt = ''
@@ -211,15 +217,22 @@ function App() {
         />
         : showAlignmentPrompt()
       }
+      {(!showAligner && fileModified) &&
+        <FileSaveButton
+          title={"Save Changes to file"}
+          fileText={JSON.stringify(targetBookObj)}
+          fileName={targetBookPath || ''}
+        />
+      }
       <FileInput
         onFileLoad={onAlignedBibleLoad}
         title={"Open Aligned Bible Book USFM"}
-        open={true}
+        open={!showAligner}
       />
       <FileInput
         onFileLoad={onOriginalBibleLoad}
         title={"Open Original Bible Book USFM"}
-        open={!!targetBookObj}
+        open={!showAligner && !!targetBookObj}
       />
       {/* <VSCodeButton onClick={handleHowdyClick}>Howdy!</VSCodeButton> */}
     </main>
