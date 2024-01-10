@@ -6,7 +6,9 @@ import { usfmHelpers } from 'word-aligner-rcl';
 // @ts-ignore
 import {
   VSCodeButton,
-  VSCodeTextField
+  VSCodeTextField,
+  VSCodeDropdown,
+  VSCodeOption
 } from "@vscode/webview-ui-toolkit/react";
 
 import { vscode } from "./utilities/vscode";
@@ -31,12 +33,6 @@ export interface OnChangeType {
   (): void;
 }
 
-export type ComboBoxParams = {
-  options: any,
-  label: string,
-  onChange: OnChangeType
-};
-
 function getBookId(bookObjects: Object):string|null {
   const details = usfmHelpers.getUSFMDetails(bookObjects)
   return details?.book?.id
@@ -47,7 +43,9 @@ function App() {
   const [originalBookObj, setOrginalBookObj] = useState<object|null>(null);
   const [bookId, setBookId] = useState<string>('');
   const [chapter, setChapter] = useState<string>('1');
+  const [chapterList, setChapterList] = useState<string[]>([]);
   const [verse, setVerse] = useState<string>('1');
+  const [verseList, setVerseList] = useState<string[]>([]);
   const [targetVerseObj, setTargetVerseObj] = useState<object|null>(null);
   const [originalVerseObj, setOriginalVerseObj] = useState<object|null>(null);
   const [showAligner, setShowAligner] = useState<boolean>(false);
@@ -99,12 +97,31 @@ function App() {
       const _bookId = getBookId(bookObjects)
       if (bookId === _bookId) {
         setOrginalBookObj(bookObjects)
+        const chapters = bookObjects?.chapters
+        const _chapterList = Object.keys(chapters)
+        setChapterList(_chapterList)
+        const _chapter = '1';
+        setChapter(_chapter)
+        updateVerses(bookObjects || {}, _chapter)
       } else {
         console.error(`onOriginalBibleLoad: invalid original book '${_bookId}' loaded, should be '${bookId}'`)
       }
     }
   }
 
+  function updateVerses(originalBookObj:object, chapter:string) {
+    // @ts-ignore
+    const chapters = originalBookObj?.chapters || {};
+    const verses = chapters[chapter];
+    const _verseList = verses && Object.keys(verses) || [];
+    setVerseList(_verseList);
+    setVerse("1");
+  }
+
+  useEffect(() => {
+    updateVerses(originalBookObj || {}, chapter)
+  }, [ originalBookObj, chapter ])
+  
   const haveBooksLoaded = targetBookObj && originalBookObj
   const alignmentsReady = haveBooksLoaded && targetVerseObj && originalVerseObj
 
@@ -153,24 +170,35 @@ function App() {
     return e?.target?.value || ''
   }
 
+  function getOptions(options:string[]) {
+    return options.map((option, index) => (
+        <VSCodeOption key={index}>{option}</VSCodeOption>
+      ))
+  }
+
   return (
     <main>
       <h1>Word Aligner Demo</h1>
       <div>
-        <VSCodeTextField
-          value={chapter || ''}
+        <label htmlFor="chapter-dropdown">Chapter</label>
+        <VSCodeDropdown
+          id="chapter-dropdown"
           disabled={showAligner}
-          onInput={e => setChapter(getInputValue(e))}>
-          Enter Chapter
-        </VSCodeTextField>
-        <VSCodeTextField
-          value={verse || ''}
+          onChange={e => setChapter(getInputValue(e))}
+        >
+          {getOptions(chapterList)}
+        </VSCodeDropdown>
+
+        <label htmlFor="verse-dropdown">Verse</label>
+        <VSCodeDropdown
+          id="verse-dropdown"
           disabled={showAligner}
-          onInput={e => setVerse(getInputValue(e))}>
-          Enter Verse
-        </VSCodeTextField>
+          onChange={e => setVerse(getInputValue(e))}
+        >
+          {getOptions(verseList)}
+        </VSCodeDropdown>
       </div>
-      <div style={{"height": "40px"}}></div>
+      <div style={{ "height": "40px" }}></div>
       {showAligner ?
         <WordAlignerDialog
           targetVerseObj={targetVerseObj}
