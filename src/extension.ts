@@ -1,12 +1,12 @@
 import { commands, ExtensionContext } from "vscode";
-import { HelloWorldPanel } from "./panels/HelloWorldPanel";
+import { WordAlignerPanel } from "./panels/WordAlignerPanel";
 
 export function activate(context: ExtensionContext) {
   // Create the show Word Aligner command
-  const showHelloWorldCommand = commands.registerCommand("word-aligner.showWordAligner", () => {
-    HelloWorldPanel.render(context.extensionUri);
+  const showWordAlignerPanelCommand = commands.registerCommand("word-aligner.showWordAligner", () => {
+    WordAlignerPanel.render(context.extensionUri);
   });
 
   // Add command to the extension context
-  context.subscriptions.push(showHelloWorldCommand);
+  context.subscriptions.push(showWordAlignerPanelCommand);
 }

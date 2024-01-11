@@ -55,9 +55,9 @@ function App() {
   const [fileModified, setFileModified] = useState<boolean>(false);
   const reference = { bookId, chapter, verse }
   
-  function handleHowdyClick() {
+  function handleHowdyClick() { // TODO: save file
     vscode.postMessage({
-      command: "hello",
+      command: "save",
       text: "Hey there partner! 🤠",
     });
   }
