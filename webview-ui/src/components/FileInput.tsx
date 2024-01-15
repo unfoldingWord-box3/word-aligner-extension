@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 // @ts-ignore
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
+import { vscode } from '../utilities/vscode';
 
 // @ts-ignore
 /// unfortunately, this doesn't work in the webview, fs is undefined
@@ -31,38 +32,43 @@ export const FileInput: React.FC<FileInputParams> = ({
   const inputFile = useRef(null);
 
   const onButtonClick = () => {
-    // `current` points to the mounted file input element
-    console.log("FileInput - on button click")
+    let listener:any = null
+
     // @ts-ignore
-    inputFile.current.click();
-  };
+    listener = event => { // catch the response of the file picker
+      const message = event.data;
+      if (message.command === 'WEBVIEW_FILE_PICKER_RESULTS') {
+        const fileUrl = message?.results?.filePath
+        const fileData = message?.results?.contents
+        console.log(`file picker finished: ${fileUrl}`)
 
-  // @ts-ignore
-  const handleFileUpload = event => {
-    const file = event.target.files[0];
-    const reader = new FileReader();
+        // @ts-ignore
+        listener && window.removeEventListener('message', listener) // remove listener
 
-    reader.onloadend = () => {
-      // The file's text will be printed here
-      const fileData = reader?.result?.toString()
-      console.log("FileInput - loaded file", fileData?.substring(0, 100));
-      onFileLoad?.({
-        fileUrl: file?.path,
-        fileData: fileData,
-      })
-      // console.log(`fs`, fs)
-      // const exists = fs.existsSync(file?.path)
-      // console.log(`verified file: ${exists}`)
+        console.log("FileInput - loaded file", fileData?.substring(0, 100));
+        onFileLoad?.({
+          fileUrl,
+          fileData,
+        })
+      }
     };
 
-    console.log("FileInput - selected file", file);
-    reader.readAsText(file);
+    window.addEventListener('message', listener);
+    
+    vscode.postMessage({
+      command:'openFilePicker',
+      canSelectMany: false,
+      label: 'Open USFM',
+      filters: {
+        'USFM files': ['usfm'],
+        'All files': ['*']
+      }
+    });
   };
 
   return (
     open ?
       <div style={{"padding": "10px"}}>
-        <input type='file' id='file' ref={inputFile} style={{ display: 'none' }} onChange={handleFileUpload} />
         <VSCodeButton onClick={onButtonClick}>{title}</VSCodeButton>
       </div>
     :

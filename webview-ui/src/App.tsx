@@ -55,10 +55,11 @@ function App() {
   const [fileModified, setFileModified] = useState<boolean>(false);
   const reference = { bookId, chapter, verse }
   
-  function handleHowdyClick() { // TODO: save file
+  // function doSaveChanges() { // TODO: convert back to USFM and save file
     vscode.postMessage({
       command: "save",
-      text: "Hey there partner! 🤠",
+      text: targetBookObj,
+      filePath: targetBookPath
     });
   }
 
@@ -218,11 +219,12 @@ function App() {
         : showAlignmentPrompt()
       }
       {(!showAligner && fileModified) &&
-        <FileSaveButton
-          title={"Save Changes to file"}
-          fileText={JSON.stringify(targetBookObj)}
-          fileName={targetBookPath || ''}
-        />
+        <VSCodeButton onClick={doSaveChanges}>Save Modified File</VSCodeButton>
+        //     <FileSaveButton
+        //     title={"Save Changes to file"}
+        //   fileText={JSON.stringify(targetBookObj)}
+        //   fileName={targetBookPath || ''}
+        // />
       }
       <FileInput
         onFileLoad={onAlignedBibleLoad}
@@ -234,7 +236,6 @@ function App() {
         title={"Open Original Bible Book USFM"}
         open={!showAligner && !!targetBookObj}
       />
-       <VSCodeButton onClick={handleHowdyClick}>Save</VSCodeButton> 
     </main>
   );
 }

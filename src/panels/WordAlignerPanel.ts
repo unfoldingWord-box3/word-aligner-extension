@@ -1,4 +1,6 @@
 import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
+import * as fs from 'fs'
+import* as util from 'util'
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 
@@ -125,6 +127,51 @@ export class WordAlignerPanel {
       </html>
     `;
   }
+  
+  private _showFileOpenDialog(message:any) {
+    let openDialog = async () => {
+      const options = {
+        canSelectMany: !!message?.canSelectMany,
+        openLabel: message?.openLabel || 'Open USFM',
+        filters: message?.filters || {
+          'All files': ['*']
+        }
+      };
+      console.log('_showFileOpenDialog - options:',options);
+
+      let contents:string|null = null
+      let fileUri = await window.showOpenDialog(options);
+      let _fileUri:string|null = null
+      if (fileUri && fileUri[0]) {
+        _fileUri = fileUri[0].fsPath;
+
+        console.log('_showFileOpenDialog - reading file :',_fileUri);
+        let readFile = util.promisify(fs.readFile);
+
+        let readContents = async (fileUri:string) => {
+          if (fileUri) {
+            let data = await readFile(fileUri, 'utf8');
+            contents = data.toString()
+            console.log('File contents: ' + contents.substr(0, 100));
+          }
+        };
+
+        await readContents(_fileUri);
+      }
+
+      console.log('Selected folder: ' + _fileUri);
+      this._panel.webview.postMessage({
+        command: 'WEBVIEW_FILE_PICKER_RESULTS',
+        results: { 
+          message,
+          filePath: _fileUri,
+          contents,
+        }
+      })
+    };
+
+    openDialog();
+  }
 
   /**
    * Sets up an event listener to listen for messages passed from the webview context and
@@ -138,13 +185,22 @@ export class WordAlignerPanel {
       (message: any) => {
         const command = message.command;
         const text = message.text;
+        const filePath = message.filePath;
 
         switch (command) {
           case "save":
             // Code that should run in response to the save message command
-            window.showInformationMessage(text);
-            console.log("webview.cspSource", webview.cspSource)
+            window.showInformationMessage('saving');
+            // TODO: save to file
             return;
+        
+          case 'openFilePicker':
+            // Code that should run in response to the save message command
+            window.showInformationMessage('openFilePicker');
+            console.log("openFilePicker", message)
+            this._showFileOpenDialog(message)
+            return;
+          
           // Add more switch case statements here as more webview message commands
           // are created within the webview context (i.e. inside media/main.js)
         }
