@@ -55,7 +55,7 @@ function App() {
   const [fileModified, setFileModified] = useState<boolean>(false);
   const reference = { bookId, chapter, verse }
   
-  // function doSaveChanges() { // TODO: convert back to USFM and save file
+  function doSaveChanges() { // TODO: convert back to USFM and save file
     vscode.postMessage({
       command: "save",
       text: targetBookObj,
