@@ -234,7 +234,7 @@ function App() {
         title={"Open Original Bible Book USFM"}
         open={!showAligner && !!targetBookObj}
       />
-      {/* <VSCodeButton onClick={handleHowdyClick}>Howdy!</VSCodeButton> */}
+       <VSCodeButton onClick={handleHowdyClick}>Save</VSCodeButton> 
     </main>
   );
 }

@@ -113,7 +113,8 @@ export class WordAlignerPanel {
         <head>
           <meta charset="UTF-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' script-src 'nonce-${nonce}';">
+<!--          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">-->
+          <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline' https://*.vscode-cdn.net; style-src-elem 'self' 'unsafe-inline' https://*.vscode-cdn.net; script-src 'nonce-${nonce}';">
           <link rel="stylesheet" type="text/css" href="${stylesUri}">
           <title>Word Aligner Demo</title>
         </head>
@@ -142,6 +143,7 @@ export class WordAlignerPanel {
           case "save":
             // Code that should run in response to the save message command
             window.showInformationMessage(text);
+            console.log("webview.cspSource", webview.cspSource)
             return;
           // Add more switch case statements here as more webview message commands
           // are created within the webview context (i.e. inside media/main.js)
