@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: "build",
+    minify: false,
     sourcemap: true,
     rollupOptions: {
       output: {
