@@ -39,7 +39,7 @@ export const FileInputButton: React.FC<FileInputParams> = ({
     // @ts-ignore
     listener = event => { // catch the response of the file picker
       const message = event.data;
-      if (message.command === 'WEBVIEW_FILE_PICKER_RESULTS') {
+      if (message.command === 'WEBVIEW_FILE_OPEN_RESULTS') {
         const fileUrl = message?.results?.filePath
         const fileData = message?.results?.contents
         console.log(`file picker finished: ${fileUrl}`)

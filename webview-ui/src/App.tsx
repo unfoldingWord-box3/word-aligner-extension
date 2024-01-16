@@ -109,7 +109,7 @@ function App() {
     if (bookObjects) {
       setTargetBookObj(bookObjects)
       const _bookId = getBookId(bookObjects)
-      if (bookId !== _bookId) {
+      if (_bookId) {
         setBookId(_bookId || '')
         setOrginalBookObj(null) // clear original book since book has changed
         setTargetBookPath(data?.fileUrl)

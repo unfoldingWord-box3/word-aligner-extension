@@ -209,7 +209,7 @@ export class WordAlignerPanel {
 
       console.log('_navigateToAndReadFile -Selected folder: ' + _fileUri);
       this._panel.webview.postMessage({
-        command: 'WEBVIEW_FILE_PICKER_RESULTS',
+        command: 'WEBVIEW_FILE_OPEN_RESULTS',
         results: { 
           message,
           filePath: _fileUri,
