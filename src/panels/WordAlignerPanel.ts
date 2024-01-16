@@ -158,7 +158,7 @@ export class WordAlignerPanel {
     return false
   }
 
-  private _showFileOpenDialog(message:any) {
+  private _navigateToAndReadFile(message:any) {
     let openDialog = async () => {
       const options = {
         canSelectMany: !!message?.canSelectMany,
@@ -167,7 +167,7 @@ export class WordAlignerPanel {
           'All files': ['*']
         }
       };
-      console.log('_showFileOpenDialog - options:',options);
+      console.log('_navigateToAndReadFile - options:',options);
 
       const key = message?.key;
       if(key) {
@@ -186,14 +186,14 @@ export class WordAlignerPanel {
       if (fileUri && fileUri[0]) {
         _fileUri = fileUri[0].fsPath;
 
-        console.log('_showFileOpenDialog - reading file :',_fileUri);
+        console.log('_navigateToAndReadFile - reading file :',_fileUri);
         let readFile = util.promisify(fs.readFile);
 
         let readContents = async (fileUri:string) => {
           if (fileUri) {
             let data = await readFile(fileUri, 'utf8');
             contents = data.toString()
-            console.log('File contents: ' + contents.substr(0, 100));
+            console.log('_navigateToAndReadFile: File contents: ' + contents.substr(0, 100));
           }
         };
 
@@ -207,7 +207,7 @@ export class WordAlignerPanel {
         }
       }
 
-      console.log('Selected folder: ' + _fileUri);
+      console.log('_navigateToAndReadFile -Selected folder: ' + _fileUri);
       this._panel.webview.postMessage({
         command: 'WEBVIEW_FILE_PICKER_RESULTS',
         results: { 
@@ -216,6 +216,55 @@ export class WordAlignerPanel {
           contents,
         }
       })
+    };
+
+    openDialog();
+  }
+
+  private _navigateToAndSaveFile(message:any) {
+    const panel = this._panel;
+
+    let openDialog = async () => {
+      const options = {
+        canSelectMany: false,
+        openLabel: message?.openLabel || 'Save USFM',
+        filters: message?.filters || {
+          'All files': ['*']
+        }
+      };
+      console.log('_showFileOpenDialog - options:',options);
+
+      const filePath = message?.filePath;
+      if(filePath) {
+        console.log(`_showFileOpenDialog - initial file path: ${filePath}`)
+        // @ts-ignore
+        options['defaultUri'] = Uri.file(filePath)
+        console.log(`_showFileOpenDialog - options:`, options)
+      }
+      
+      let fileUri = await window.showOpenDialog(options);
+      if (fileUri && fileUri[0]) {
+        const _fileUri = fileUri[0].fsPath;
+
+        console.log('_showFileOpenDialog - saving file :',_fileUri);
+
+        fs.writeFile(_fileUri, message?.text || '', 'utf8', function(err) {
+          if (err) {
+            console.log('_showFileOpenDialog - An error occurred while writing the file.');
+          } else {
+            console.log('_showFileOpenDialog - File written successfully.');
+          }
+
+          panel.webview.postMessage({
+            command: 'WEBVIEW_FILE_SAVE_RESULTS',
+            results: {
+              message,
+              filePath: _fileUri,
+              success: !err,
+            }
+          })
+        });
+      }
     };
 
     openDialog();
@@ -239,14 +288,14 @@ export class WordAlignerPanel {
           case "save":
             // Code that should run in response to the save message command
             window.showInformationMessage('saving');
-            // TODO: save to file
+            this._navigateToAndSaveFile(message)
             return;
         
           case 'openFilePicker':
             // Code that should run in response to the save message command
             window.showInformationMessage('openFilePicker');
             console.log("openFilePicker", message)
-            this._showFileOpenDialog(message)
+            this._navigateToAndReadFile(message)
             return;
           
           // Add more switch case statements here as more webview message commands

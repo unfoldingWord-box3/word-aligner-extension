@@ -25,7 +25,7 @@ export type FileInputParams = {
   id: string,
 };
 
-export const FileInput: React.FC<FileInputParams> = ({
+export const FileInputButton: React.FC<FileInputParams> = ({
   onFileLoad,
   open,
   title,
@@ -84,4 +84,4 @@ export const FileInput: React.FC<FileInputParams> = ({
   );
 }
 
-export default FileInput;
+export default FileInputButton;

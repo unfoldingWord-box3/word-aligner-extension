@@ -6,7 +6,6 @@ import { usfmHelpers } from 'word-aligner-rcl';
 // @ts-ignore
 import {
   VSCodeButton,
-  VSCodeTextField,
   VSCodeDropdown,
   VSCodeOption
 } from "@vscode/webview-ui-toolkit/react";
@@ -15,11 +14,9 @@ import { vscode } from "./utilities/vscode";
 import "./App.css";
 import {
   alignmentFinishedType,
-  OnAlignmentFinishedType,
-  ScriptureReferenceType,
   WordAlignerDialog,
 } from "./components/WordAlignerDialog";
-import { FileInput, LoadedFileType } from "./components/FileInput";
+import { FileInputButton, LoadedFileType } from "./components/FileInputButton";
 import { sortReferences } from "./utilities/bibleUtils";
 import FileSaveButton from "./components/FileSaveButton";
 
@@ -56,10 +53,33 @@ function App() {
   const reference = { bookId, chapter, verse }
   
   function doSaveChanges() { // TODO: convert back to USFM and save file
+    let listener:any = null
+
+    // @ts-ignore
+    listener = event => { // catch the response of the file picker
+      const message = event.data;
+      if (message.command === 'WEBVIEW_FILE_SAVE_RESULTS') {
+        const fileUrl = message?.results?.filePath
+        const success = message?.results?.success
+        console.log(`file picker finished: ${fileUrl}, success=${success}`)
+
+        // @ts-ignore
+        listener && window.removeEventListener('message', listener) // remove listener
+      }
+    };
+
+    window.addEventListener('message', listener);
+    
+    const USFM = usfmjs.toUSFM(targetBookObj)
     vscode.postMessage({
       command: "save",
-      text: targetBookObj,
-      filePath: targetBookPath
+      text: USFM,
+      label: 'Save USFM',
+      filePath: targetBookPath,
+      filters: {
+        'USFM files': ['usfm'],
+        'All files': ['*']
+      }
     });
   }
 
@@ -219,20 +239,25 @@ function App() {
         : showAlignmentPrompt()
       }
       {(!showAligner && fileModified) &&
-        <VSCodeButton onClick={doSaveChanges}>Save Modified File</VSCodeButton>
+        <VSCodeButton
+          onClick={doSaveChanges}
+          style={{"margin": "10px"}}
+        >
+          Save Modified USFM
+        </VSCodeButton>
         //     <FileSaveButton
         //     title={"Save Changes to file"}
         //   fileText={JSON.stringify(targetBookObj)}
         //   fileName={targetBookPath || ''}
         // />
       }
-      <FileInput
+      <FileInputButton
         onFileLoad={onAlignedBibleLoad}
         title={"Open Aligned Bible Book USFM"}
         open={!showAligner}
         id={'AlignedBibleUsfm'}
       />
-      <FileInput
+      <FileInputButton
         onFileLoad={onOriginalBibleLoad}
         title={"Open Original Bible Book USFM"}
         open={!showAligner && !!targetBookObj}
