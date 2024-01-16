@@ -224,7 +224,7 @@ export class WordAlignerPanel {
   private _navigateToAndSaveFile(message:any) {
     const panel = this._panel;
 
-    let openDialog = async () => {
+    let saveDialog = async () => {
       const options = {
         canSelectMany: false,
         openLabel: message?.openLabel || 'Save USFM',
@@ -236,23 +236,23 @@ export class WordAlignerPanel {
 
       const filePath = message?.filePath;
       if(filePath) {
-        console.log(`_showFileOpenDialog - initial file path: ${filePath}`)
+        console.log(`_navigateToAndSaveFile - initial file path: ${filePath}`)
         // @ts-ignore
         options['defaultUri'] = Uri.file(filePath)
         console.log(`_showFileOpenDialog - options:`, options)
       }
       
-      let fileUri = await window.showOpenDialog(options);
-      if (fileUri && fileUri[0]) {
-        const _fileUri = fileUri[0].fsPath;
+      let fileUri = await window.showSaveDialog(options);
+      if (fileUri) {
+        const _fileUri = fileUri.fsPath;
 
-        console.log('_showFileOpenDialog - saving file :',_fileUri);
+        console.log('_navigateToAndSaveFile - saving file :',_fileUri);
 
         fs.writeFile(_fileUri, message?.text || '', 'utf8', function(err) {
           if (err) {
-            console.log('_showFileOpenDialog - An error occurred while writing the file.');
+            console.log('_navigateToAndSaveFile - An error occurred while writing the file.');
           } else {
-            console.log('_showFileOpenDialog - File written successfully.');
+            console.log('_navigateToAndSaveFile - File written successfully.');
           }
 
           panel.webview.postMessage({
@@ -267,7 +267,7 @@ export class WordAlignerPanel {
       }
     };
 
-    openDialog();
+    saveDialog();
   }
 
   /**

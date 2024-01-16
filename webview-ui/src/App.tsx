@@ -62,6 +62,7 @@ function App() {
         const fileUrl = message?.results?.filePath
         const success = message?.results?.success
         console.log(`file picker finished: ${fileUrl}, success=${success}`)
+        success && setFileModified(false)
 
         // @ts-ignore
         listener && window.removeEventListener('message', listener) // remove listener
@@ -70,7 +71,7 @@ function App() {
 
     window.addEventListener('message', listener);
     
-    const USFM = usfmjs.toUSFM(targetBookObj)
+    const USFM = usfmjs.toUSFM(targetBookObj, { forcedNewLines: true })
     vscode.postMessage({
       command: "save",
       text: USFM,
@@ -179,7 +180,7 @@ function App() {
 
   function showAlignmentPrompt() {
     if (haveBooksLoaded) {
-      return <VSCodeButton style={{ margin: "10px 50px" }} onClick={() => showSelectedVerse()}>
+      return <VSCodeButton style={{ margin: "20px 50px" }} onClick={() => showSelectedVerse()}>
         Align Verse
       </VSCodeButton>;
     }
@@ -241,7 +242,7 @@ function App() {
       {(!showAligner && fileModified) &&
         <VSCodeButton
           onClick={doSaveChanges}
-          style={{"margin": "10px"}}
+          style={{"margin": "20px 10px"}}
         >
           Save Modified USFM
         </VSCodeButton>
@@ -251,18 +252,22 @@ function App() {
         //   fileName={targetBookPath || ''}
         // />
       }
-      <FileInputButton
-        onFileLoad={onAlignedBibleLoad}
-        title={"Open Aligned Bible Book USFM"}
-        open={!showAligner}
-        id={'AlignedBibleUsfm'}
-      />
-      <FileInputButton
-        onFileLoad={onOriginalBibleLoad}
-        title={"Open Original Bible Book USFM"}
-        open={!showAligner && !!targetBookObj}
-        id={'OriginalBibleUsfm'}
-      />
+      {!fileModified &&
+        <>
+          <FileInputButton
+            onFileLoad={onAlignedBibleLoad}
+            title={"Open Aligned Bible Book USFM"}
+            open={!showAligner}
+            id={'AlignedBibleUsfm'}
+          />
+          <FileInputButton
+            onFileLoad={onOriginalBibleLoad}
+            title={"Open Original Bible Book USFM"}
+            open={!showAligner && !!targetBookObj}
+            id={'OriginalBibleUsfm'}
+          />
+        </>
+      }
     </main>
   );
 }
