@@ -1,6 +1,7 @@
-import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn } from "vscode";
+import { Disposable, Webview, WebviewPanel, window, Uri, ViewColumn, ExtensionContext } from "vscode";
 import * as fs from 'fs'
-import* as util from 'util'
+import * as path from 'path-extra'
+import * as util from 'util'
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 
@@ -18,6 +19,7 @@ export class WordAlignerPanel {
   public static currentPanel: WordAlignerPanel | undefined;
   private readonly _panel: WebviewPanel;
   private _disposables: Disposable[] = [];
+  private static _context: ExtensionContext
 
   /**
    * The WordAlignerPanel class private constructor (called only from the render method).
@@ -44,8 +46,10 @@ export class WordAlignerPanel {
    * will be created and displayed.
    *
    * @param extensionUri The URI of the directory containing the extension.
+   * @param context - current extension context
    */
-  public static render(extensionUri: Uri) {
+  public static render(extensionUri: Uri, context: ExtensionContext) {
+    WordAlignerPanel._context = context
     if (WordAlignerPanel.currentPanel) {
       // If the webview panel already exists reveal it
       WordAlignerPanel.currentPanel._panel.reveal(ViewColumn.One);
@@ -127,7 +131,33 @@ export class WordAlignerPanel {
       </html>
     `;
   }
-  
+
+  private _getGlobalKey(key:string):string|undefined {
+    if (WordAlignerPanel._context && key) {
+      try {
+        const value = WordAlignerPanel._context.globalState.get(key);
+        if (typeof value === 'string') {
+          return value.toString()
+        }
+      } catch (e) {
+        console.warn(`_getGlobalKey() failure reading ${key}`, e)
+      }
+    }
+    return undefined
+  }
+
+  private _setGlobalKey(key:string, value:string):boolean {
+    if (WordAlignerPanel._context && key) {
+      try {
+        WordAlignerPanel._context.globalState.update(key, value);
+        return true
+      } catch (e) {
+        console.warn(`_getGlobalKey() failure reading ${key}`, e)
+      }
+    }
+    return false
+  }
+
   private _showFileOpenDialog(message:any) {
     let openDialog = async () => {
       const options = {
@@ -138,6 +168,17 @@ export class WordAlignerPanel {
         }
       };
       console.log('_showFileOpenDialog - options:',options);
+
+      const key = message?.key;
+      if(key) {
+        const initialFolder = this._getGlobalKey(key)
+        if (initialFolder) {
+          console.log(`initial folder: ${initialFolder}`)
+          // @ts-ignore
+          options['defaultUri'] = Uri.file(initialFolder)
+          console.log(`options:`, options)
+        }
+      }
 
       let contents:string|null = null
       let fileUri = await window.showOpenDialog(options);
@@ -157,6 +198,13 @@ export class WordAlignerPanel {
         };
 
         await readContents(_fileUri);
+        
+        if (contents) { // if we loaded data, update folder used
+          let dirPath = path.dirname(_fileUri);
+          if (dirPath) {
+            this._setGlobalKey(key, dirPath) 
+          }
+        }
       }
 
       console.log('Selected folder: ' + _fileUri);
@@ -175,7 +223,7 @@ export class WordAlignerPanel {
 
   /**
    * Sets up an event listener to listen for messages passed from the webview context and
-   * executes code based on the message that is recieved.
+   * executes code based on the message that is received.
    *
    * @param webview A reference to the extension webview
    * @param context A reference to the extension context

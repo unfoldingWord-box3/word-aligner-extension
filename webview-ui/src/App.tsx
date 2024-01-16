@@ -230,11 +230,13 @@ function App() {
         onFileLoad={onAlignedBibleLoad}
         title={"Open Aligned Bible Book USFM"}
         open={!showAligner}
+        id={'AlignedBibleUsfm'}
       />
       <FileInput
         onFileLoad={onOriginalBibleLoad}
         title={"Open Original Bible Book USFM"}
         open={!showAligner && !!targetBookObj}
+        id={'OriginalBibleUsfm'}
       />
     </main>
   );

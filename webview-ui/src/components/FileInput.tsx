@@ -22,12 +22,14 @@ export type FileInputParams = {
   onFileLoad: OnFileLoadType,
   open: boolean,
   title: string,
+  id: string,
 };
 
 export const FileInput: React.FC<FileInputParams> = ({
   onFileLoad,
   open,
-  title
+  title,
+  id
 }) => {
   const inputFile = useRef(null);
 
@@ -59,6 +61,7 @@ export const FileInput: React.FC<FileInputParams> = ({
       command:'openFilePicker',
       canSelectMany: false,
       label: 'Open USFM',
+      key: id,
       filters: {
         'USFM files': ['usfm'],
         'All files': ['*']
@@ -69,7 +72,12 @@ export const FileInput: React.FC<FileInputParams> = ({
   return (
     open ?
       <div style={{"padding": "10px"}}>
-        <VSCodeButton onClick={onButtonClick}>{title}</VSCodeButton>
+        <VSCodeButton
+          onClick={onButtonClick}
+          id={id}
+        >
+          {title}
+        </VSCodeButton>
       </div>
     :
       <></>
