@@ -1,6 +1,14 @@
 # Word Aligner Demo
+This is a stand-along Word Alignment App that is packaged as a webview within a VsCode extension.  Makes use of the word-aligner-rcl (a react component).  Also demonstrates using messaging between webview and extension to access file system and persist preferences.  Uses vscode components in place of material UI components.
 
 ## Documentation
+This is a mono repo.  The extension is defined in the base folder, and the Word Aligner webview is devined in `webview-ui`
+
+**Key files:**
+- src/panels/WordAlignerPanel.ts
+  - launches the webview and listens for messages from the webview
+- webview-ui/src/App.tsx
+  - the Word aligner webview app
 
 ## Run The Sample
 
