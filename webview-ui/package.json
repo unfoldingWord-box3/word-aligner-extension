@@ -8,6 +8,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-hookz/deep-equal": "^1.0.4",
     "@mui/lab": "^5.0.0-alpha.129",
     "@mui/material": "^5.15.3",
     "@vscode/webview-ui-toolkit": "^1.2.2",

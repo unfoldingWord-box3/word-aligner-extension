@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 // @ts-ignore
-import { AlignmentHelpers, UsfmFileConversionHelpers, usfmHelpers, WordAligner } from "word-aligner-rcl";
+import { AlignmentHelpers, migrateOriginalLanguageHelpers, UsfmFileConversionHelpers, usfmHelpers, WordAligner } from "word-aligner-rcl";
 import { NT_ORIG_LANG, OT_ORIG_LANG } from "../common/constants";
 // @ts-ignore
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 
 import * as LexiconData_ from "../../__tests__/fixtures/lexicon/lexicons.json";
 import { isNT } from "../common/BooksOfTheBible";
+import { isEqual } from "@react-hookz/deep-equal";
 const LexiconData: Record<string, Record<string, Record<string,string>>> = LexiconData_
 
 console.log("WordAlignerDialog")
@@ -73,9 +74,21 @@ export function WordAlignerDialog(params: WordAlignerParams) {
   function setState(newState: object) {
     setState_(prevState => ({ ...prevState, ...newState }))
   }
-  
+
+  /**
+   * first checks the alignments in the target language, and if the original language content has
+   *   changed since the target alignments were made, then we migrate the alignments to match the
+   *   current content in the original.
+   *   Then we separate out the target words for use in the wordbank on the left, and we separate
+   *   out the alignments for the alignment grid.  We create empty alignments for any original
+   *   
+   */
   function initializeALignmentData() {
-    const targetVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(targetVerseObj);
+    const _targetVerseObj = migrateOriginalLanguageHelpers.migrateTargetAlignmentsToOriginal(targetVerseObj, originalVerseObj)
+    if (!isEqual(targetVerseObj, _targetVerseObj)) {
+      console.log(`WordAlignerDialog.initializeALignmentData() - migrated alignments`)
+    }
+    const targetVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(_targetVerseObj);
     const originalVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(originalVerseObj);
     const {
       targetWords: targetWords_,
@@ -97,31 +110,31 @@ export function WordAlignerDialog(params: WordAlignerParams) {
   }, [ targetVerseObj, originalVerseObj ])
   
   const loadLexiconEntry = (key:string) => {
-    console.log(`loadLexiconEntry(${key})`)
+    console.log(`WordAlignerDialog.loadLexiconEntry(${key})`)
   };
   const getLexiconData_ = (lexiconId:string, entryId:string) => {
-    console.log(`loadLexiconEntry(${lexiconId}, ${entryId})`)
+    console.log(`WordAlignerDialog.getLexiconData_(${lexiconId}, ${entryId})`)
     const entryData = (LexiconData && LexiconData[lexiconId]) ? LexiconData[lexiconId][entryId] : null;
     return {[lexiconId]: {[entryId]: entryData}};
   };
 
   function onChange(results:any) {
-    console.log(`WordAligner() - alignment changed, results`, results);// merge alignments into target verse and convert to USFM
+    console.log(`WordAlignerDialog.onChange() - alignment changed, results`, results);// merge alignments into target verse and convert to USFM
     const {targetWords, verseAlignments} = results;
     const targetVerseUsfm = UsfmFileConversionHelpers.convertVerseDataToUSFM(targetVerseObj);
     const verseUsfm = AlignmentHelpers.addAlignmentsToVerseUSFM(targetWords, verseAlignments, targetVerseUsfm);
-    console.log(verseUsfm);
+    // console.log('WordAlignerDialog.onChange() - verseUsfm', verseUsfm);
     const alignmentComplete = AlignmentHelpers.areAlgnmentsComplete(targetWords, verseAlignments);
     setState({
       alignmentChanged: true,
       updatedTargetWords: targetWords,
       updatedVerseAlignments: verseAlignments,
     })
-    console.log(`Alignments are ${alignmentComplete ? 'COMPLETE!' : 'incomplete'}`);
+    console.log(`WordAlignerDialog.onChange() - Alignments are ${alignmentComplete ? 'COMPLETE!' : 'incomplete'}`);
   }
 
   function onReset() {
-    console.log("WordAligner() - reset Alignments")
+    console.log("WordAlignerDialog.onReset() - reset Alignments")
     const alignmentData_ = AlignmentHelpers.resetAlignments(verseAlignments, targetWords)
     setState({
       alignmentChanged: true,
@@ -131,13 +144,13 @@ export function WordAlignerDialog(params: WordAlignerParams) {
   }
 
   function onCancel() {
-    console.log("WordAligner() - cancel Alignments")
+    console.log("WordAlignerDialog.onCancel() - cancel Alignments")
     initializeALignmentData()
     onAlignmentFinished?.({ alignmentChanged: false })
   }
 
   function onFinish() {
-    console.log("WordAligner() - finish Alignments")
+    console.log("WordAlignerDialog.onFinish() - finish Alignments")
     const newState = {
       alignmentChanged,
 
